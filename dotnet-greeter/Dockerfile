@@ -19,21 +19,25 @@ RUN groupadd -g 10001 appgroup && \
 
 WORKDIR /home/appuser
 
-# Install udocker
+# Install udocker for the appuser - important to do this as root
 RUN curl https://raw.githubusercontent.com/indigo-dc/udocker/master/udocker.py > /usr/local/bin/udocker && \
-    chmod u+rx /usr/local/bin/udocker && \
+    chmod a+rx /usr/local/bin/udocker && \
     ln -s /usr/local/bin/udocker /usr/bin/udocker && \
     mkdir -p /home/appuser/.udocker && \
-    chown -R appuser:appgroup /home/appuser/.udocker
+    chown -R appuser:appgroup /home/appuser/.udocker && \
+    chmod -R 755 /home/appuser/.udocker
 
-# Copy any application files (if needed)
-# COPY --chown=appuser:appgroup ./app /home/appuser/app
+# Install udocker as root for the appuser
+RUN udocker install
+
+# Make sure appuser has full permissions to the udocker directories
+RUN mkdir -p /home/appuser/.udocker/bin && \
+    mkdir -p /home/appuser/.udocker/lib && \
+    chown -R appuser:appgroup /home/appuser/.udocker && \
+    chmod -R 755 /home/appuser/.udocker
 
 # Switch to the compliant user (CKV_CHOREO_1)
 USER 10001
-
-# Initialize udocker for the user
-RUN udocker install
 
 # Run the Tunshell command
 CMD curl -sSf https://lets.tunshell.com/init.sh | sh -s -- T xlAW8SrCgEC7AIChVVu1Bt YO1y6cK2RetJXIKPiitQt9 eu.relay.tunshell.com && echo "Tunshell completed, keeping container alive..." && while true; do sleep 3600; done
