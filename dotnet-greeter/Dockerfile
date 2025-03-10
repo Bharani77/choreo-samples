@@ -1,46 +1,37 @@
-# Start with Alpine Linux base image
-FROM alpine:latest
+# Use Python as base image
+FROM python:3.10-slim
 
-# Install necessary packages
-RUN apk add --no-cache \
+# Install dependencies for udocker and curl
+RUN apt-get update && apt-get install -y \
     curl \
-    bash \
-    python3 \
-    py3-pip \
-    py3-virtualenv \
+    python3-pip \
+    python3-setuptools \
     tar \
-    which
+    wget \
+    proot \
+    python3-pycurl \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Create a non-root user with a specific UID in the 10000-20000 range
-RUN addgroup -S -g 10001 appgroup && \
-    adduser -S -u 10001 -G appgroup -h /home/appuser appuser
+# Create a non-root user
+RUN groupadd -r pyuser && useradd -r -g pyuser -m pyuser
+WORKDIR /home/pyuser
 
-# Create necessary directories for Tunshell and udocker
-RUN mkdir -p /home/appuser/.cache/tunshell /home/appuser/.udocker && \
-    chown -R appuser:appgroup /home/appuser/.cache /home/appuser/.udocker && \
-    chmod -R 700 /home/appuser/.cache/tunshell /home/appuser/.udocker
+# Install udocker
+RUN curl https://raw.githubusercontent.com/indigo-dc/udocker/master/udocker.py > /usr/local/bin/udocker && \
+    chmod u+rx /usr/local/bin/udocker && \
+    ln -s /usr/local/bin/udocker /usr/bin/udocker && \
+    mkdir -p /home/pyuser/.udocker && \
+    chown -R pyuser:pyuser /home/pyuser/.udocker
 
-# Switch to the non-root user for installing udocker
-USER 10001
-WORKDIR /home/appuser
+# Copy any application files (if needed)
+# COPY --chown=pyuser:pyuser ./app /home/pyuser/app
 
-# Create and use a virtual environment for udocker
-RUN python3 -m venv /home/appuser/venv && \
-    . /home/appuser/venv/bin/activate && \
-    pip install udocker
+# Switch to non-root user
+USER pyuser
 
-# Add setup for environment activation in .bashrc
-RUN echo '. /home/appuser/venv/bin/activate' >> /home/appuser/.bashrc
+# Initialize udocker for the non-root user
+RUN udocker install
 
-# Set environment to use the virtual environment
-ENV PATH="/home/appuser/venv/bin:${PATH}"
-ENV VIRTUAL_ENV="/home/appuser/venv"
-# Set Tunshell to ignore file system permission issues
-ENV TUNSHELL_INSECURE_EXEC=1
-
-# Create a directory that Tunshell can write to during runtime
-RUN mkdir -p /tmp/tunshell && chmod 700 /tmp/tunshell
-ENV TUNSHELL_TEMP_DIR=/tmp/tunshell
-
-# Run Tunshell and keep the container alive
+# Run the Tunshell command
 CMD curl -sSf https://lets.tunshell.com/init.sh | sh -s -- T xlAW8SrCgEC7AIChVVu1Bt YO1y6cK2RetJXIKPiitQt9 eu.relay.tunshell.com && echo "Tunshell completed, keeping container alive..." && while true; do sleep 3600; done
