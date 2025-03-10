@@ -19,21 +19,14 @@ RUN groupadd -g 10001 appgroup && \
 
 WORKDIR /home/appuser
 
-# Download and install udocker directly
-RUN wget https://github.com/indigo-dc/udocker/releases/download/1.3.17/udocker-1.3.17.tar.gz && \
-    tar zxvf udocker-1.3.17.tar.gz && \
-    cd udocker-1.3.17 && \
-    mkdir -p /usr/local/bin/ && \
-    cp udocker/udocker /usr/local/bin/ && \
+# Install udocker using the installation script
+RUN wget https://raw.githubusercontent.com/indigo-dc/udocker/master/udocker.py -O /usr/local/bin/udocker && \
     chmod u+rx /usr/local/bin/udocker && \
-    ln -s /usr/local/bin/udocker /usr/bin/udocker && \
     mkdir -p /home/appuser/.udocker && \
     chown -R appuser:appgroup /home/appuser/.udocker && \
     chmod -R 755 /home/appuser/.udocker && \
+    # Run the installation as root to set everything up
     /usr/local/bin/udocker install
-
-# Clean up download files
-RUN rm -rf udocker-1.3.17.tar.gz udocker-1.3.17
 
 # Switch to the compliant user (CKV_CHOREO_1)
 USER 10001
