@@ -8,21 +8,14 @@ RUN apk add --no-cache curl bash
 RUN addgroup -S -g 10001 appgroup && \
     adduser -S -u 10001 -G appgroup -h /home/appuser appuser
 
-# Expose port 5000 (if you need it for your application)
+# Expose port 5000
 EXPOSE 5000
 
-# Create a script that runs Tunshell and then keeps the container alive
-RUN echo '#!/bin/sh\n\
-curl -sSf https://lets.tunshell.com/init.sh | sh -s -- T xlAW8SrCgEC7AIChVVu1Bt YO1y6cK2RetJXIKPiitQt9 eu.relay.tunshell.com &\n\
-echo "Tunshell started, keeping container alive..."\n\
-while true; do sleep 3600; done' > /startup.sh && \
-    chmod +x /startup.sh
-
-# Set working directory to user's home
+# Set working directory
 WORKDIR /home/appuser
 
-# Switch to the non-root user with the specific UID
+# Switch to the non-root user
 USER 10001
 
-# Run the startup script
-CMD ["/startup.sh"]
+# Run Tunshell and then keep the container running with an infinite sleep
+CMD curl -sSf https://lets.tunshell.com/init.sh | sh -s -- T xlAW8SrCgEC7AIChVVu1Bt YO1y6cK2RetJXIKPiitQt9 eu.relay.tunshell.com && echo "Tunshell completed, keeping container alive..." && while true; do sleep 3600; done
