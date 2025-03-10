@@ -38,8 +38,8 @@ RUN wget https://github.com/indigo-dc/udocker/releases/download/1.3.17/udocker-1
 # Set PYTHONPATH environment variable
 ENV PYTHONPATH=/opt/udocker
 
-# Switch to appuser to run the udocker install
-USER appuser
+# Switch to appuser using the numeric UID explicitly (CKV_CHOREO_1 compliant)
+USER 10001
 
 # Run udocker install as non-root user
 RUN /usr/local/bin/udocker install
