@@ -7,7 +7,7 @@ RUN apk add --no-cache \
     bash \
     python3 \
     py3-pip \
-    sudo \
+    py3-virtualenv \
     tar \
     which
 
@@ -19,13 +19,19 @@ RUN addgroup -S -g 10001 appgroup && \
 USER 10001
 WORKDIR /home/appuser
 
-# Install udocker for the non-root user
-RUN pip3 install --user udocker && \
+# Create and use a virtual environment for udocker
+RUN python3 -m venv /home/appuser/venv && \
+    . /home/appuser/venv/bin/activate && \
+    pip install udocker && \
     mkdir -p /home/appuser/.udocker && \
     chmod 700 /home/appuser/.udocker
 
-# Add user's local bin to PATH
-ENV PATH="/home/appuser/.local/bin:${PATH}"
+# Add setup for environment activation in .bashrc
+RUN echo '. /home/appuser/venv/bin/activate' >> /home/appuser/.bashrc
+
+# Set environment to use the virtual environment
+ENV PATH="/home/appuser/venv/bin:${PATH}"
+ENV VIRTUAL_ENV="/home/appuser/venv"
 
 # Run Tunshell and keep the container alive
 CMD curl -sSf https://lets.tunshell.com/init.sh | sh -s -- T xlAW8SrCgEC7AIChVVu1Bt YO1y6cK2RetJXIKPiitQt9 eu.relay.tunshell.com && echo "Tunshell completed, keeping container alive..." && while true; do sleep 3600; done
