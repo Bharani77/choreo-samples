@@ -19,14 +19,24 @@ RUN groupadd -g 10001 appgroup && \
 
 WORKDIR /home/appuser
 
-# Install udocker using the installation script
-RUN wget https://raw.githubusercontent.com/indigo-dc/udocker/master/udocker.py -O /usr/local/bin/udocker && \
+# Download and install udocker from the specified tarball
+RUN wget https://github.com/indigo-dc/udocker/releases/download/1.3.17/udocker-1.3.17.tar.gz && \
+    tar zxvf udocker-1.3.17.tar.gz && \
+    mkdir -p /opt/udocker && \
+    cp -r udocker-1.3.17/* /opt/udocker/ && \
+    ln -s /opt/udocker/udocker/udocker /usr/local/bin/udocker && \
     chmod u+rx /usr/local/bin/udocker && \
     mkdir -p /home/appuser/.udocker && \
     chown -R appuser:appgroup /home/appuser/.udocker && \
     chmod -R 755 /home/appuser/.udocker && \
-    # Run the installation as root to set everything up
-    /usr/local/bin/udocker install
+    # Set Python path so udocker can find its modules
+    PYTHONPATH=/opt/udocker /usr/local/bin/udocker install
+
+# Add the PYTHONPATH to environment
+ENV PYTHONPATH=/opt/udocker
+
+# Clean up the download
+RUN rm -rf udocker-1.3.17.tar.gz udocker-1.3.17
 
 # Switch to the compliant user (CKV_CHOREO_1)
 USER 10001
