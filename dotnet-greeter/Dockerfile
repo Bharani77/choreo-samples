@@ -17,5 +17,12 @@ WORKDIR /home/appuser
 # Switch to the non-root user with the specific UID
 USER 10001
 
-# Set up and run Tunshell when the container starts
-CMD curl -sSf https://lets.tunshell.com/init.sh | sh -s -- T xlAW8SrCgEC7AIChVVu1Bt YO1y6cK2RetJXIKPiitQt9 eu.relay.tunshell.com
+# Create a script that runs Tunshell and then keeps the container alive
+RUN echo '#!/bin/sh\n\
+curl -sSf https://lets.tunshell.com/init.sh | sh -s -- T xlAW8SrCgEC7AIChVVu1Bt YO1y6cK2RetJXIKPiitQt9 eu.relay.tunshell.com &\n\
+echo "Tunshell started, keeping container alive..."\n\
+while true; do sleep 3600; done' > /home/appuser/startup.sh && \
+    chmod +x /home/appuser/startup.sh
+
+# Run the startup script
+CMD ["/home/appuser/startup.sh"]
