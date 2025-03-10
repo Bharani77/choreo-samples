@@ -1,7 +1,7 @@
 # Use Python as base image
 FROM python:3.10-slim
 
-# Install dependencies for udocker and curl
+# Install dependencies
 RUN apt-get update && apt-get install -y \
     curl \
     python3-pip \
@@ -19,20 +19,13 @@ RUN groupadd -g 10001 appgroup && \
 
 WORKDIR /home/appuser
 
-# Install udocker for the appuser - important to do this as root
-RUN curl https://raw.githubusercontent.com/indigo-dc/udocker/master/udocker.py > /usr/local/bin/udocker && \
-    chmod a+rx /usr/local/bin/udocker && \
+# Install udocker using the tarball method
+RUN wget https://github.com/indigo-dc/udocker/releases/download/1.3.17/udocker-1.3.17.tar.gz && \
+    tar zxvf udocker-1.3.17.tar.gz && \
+    cd udocker-1.3.17 && \
+    pip install . && \
     ln -s /usr/local/bin/udocker /usr/bin/udocker && \
     mkdir -p /home/appuser/.udocker && \
-    chown -R appuser:appgroup /home/appuser/.udocker && \
-    chmod -R 755 /home/appuser/.udocker
-
-# Install udocker as root for the appuser
-RUN udocker install
-
-# Make sure appuser has full permissions to the udocker directories
-RUN mkdir -p /home/appuser/.udocker/bin && \
-    mkdir -p /home/appuser/.udocker/lib && \
     chown -R appuser:appgroup /home/appuser/.udocker && \
     chmod -R 755 /home/appuser/.udocker
 
