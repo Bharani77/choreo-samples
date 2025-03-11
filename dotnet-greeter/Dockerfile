@@ -1,9 +1,12 @@
-# Use Python as base image
-FROM bharanidharan/udocker:v2
+# Use the official Docker image as base
+FROM docker:latest
 
-# Check if user/group exists and create if not, without modifying sudoers
-RUN id -g 10002 &>/dev/null || groupadd -g 10002 appgroup && \
-    id -u 10002 &>/dev/null || useradd -u 10002 -g appgroup -m -s /bin/bash appuser
+# Install required tools
+RUN apk add --no-cache curl bash
+
+# Create a user with UID in the 10000-20000 range (compliant with CKV_CHOREO_1)
+RUN addgroup -g 10002 appgroup && \
+    adduser -u 10002 -G appgroup -h /home/appuser -s /bin/bash -D appuser
 
 WORKDIR /home/appuser
 
