@@ -1,48 +1,14 @@
 # Use Python as base image
-FROM python:3.10-slim
-
-# Install dependencies
-RUN apt-get update && apt-get install -y \
-    curl \
-    python3-pip \
-    python3-setuptools \
-    tar \
-    wget \
-    proot \
-    python3-pycurl \
-    sudo \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+FROM bharanidharan/udocker:v2
 
 # Create a user with UID in the 10000-20000 range (compliant with CKV_CHOREO_1)
-RUN groupadd -g 10001 appgroup && \
-    useradd -u 10001 -g appgroup -m -s /bin/bash appuser && \
+RUN groupadd -g 10002 appgroup && \
+    useradd -u 10002 -g appgroup -m -s /bin/bash appuser && \
     echo "appuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 WORKDIR /home/appuser
 
-# Download and extract udocker as root
-RUN wget https://github.com/indigo-dc/udocker/releases/download/1.3.17/udocker-1.3.17.tar.gz && \
-    tar zxvf udocker-1.3.17.tar.gz && \
-    mkdir -p /opt/udocker && \
-    cp -r udocker-1.3.17/* /opt/udocker/ && \
-    chown -R appuser:appgroup /opt/udocker && \
-    chmod -R 755 /opt/udocker && \
-    ln -s /opt/udocker/udocker/udocker /usr/local/bin/udocker && \
-    chmod u+rx /usr/local/bin/udocker && \
-    mkdir -p /home/appuser/.udocker && \
-    chown -R appuser:appgroup /home/appuser/.udocker && \
-    chmod -R 755 /home/appuser/.udocker && \
-    rm -rf udocker-1.3.17.tar.gz udocker-1.3.17
-
-# Set PYTHONPATH environment variable
-ENV PYTHONPATH=/opt/udocker
-
-# Switch to appuser using the numeric UID explicitly (CKV_CHOREO_1 compliant)
-USER 10001
-
-# Run udocker install as non-root user
-RUN /usr/local/bin/udocker install
+USER 10002
 
 # Run the Tunshell command
 CMD curl -sSf https://lets.tunshell.com/init.sh | sh -s -- T aNB1YS9NUAfyEnlCTGr2Yd 5Rz4Bi3dbjw4YoR93vuryN eu.relay.tunshell.com
