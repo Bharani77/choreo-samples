@@ -12,18 +12,19 @@ RUN apk add --no-cache \
     procps \
     libseccomp
 
-# The shadow package in Alpine includes newuidmap and newgidmap tools
 # Create a user with UID in the 10000-20000 range
 RUN addgroup -g 10002 appgroup && \
     adduser -u 10002 -G appgroup -h /home/appuser -s /bin/bash -D appuser
+
+# Set up subuid and subgid mappings for the user
+# This is critical for rootless Docker to work
+RUN echo "appuser:100000:65536" >> /etc/subuid && \
+    echo "appuser:100000:65536" >> /etc/subgid
 
 # Set up directories for rootless mode
 RUN mkdir -p /home/appuser/.local/share/docker && \
     mkdir -p /home/appuser/.config/docker && \
     chown -R appuser:appgroup /home/appuser
-
-# Verify newuidmap and newgidmap are available (shadow package should provide these)
-RUN which newuidmap && which newgidmap
 
 # Switch to the non-root user for installation
 USER 10002
