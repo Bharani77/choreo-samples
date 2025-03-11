@@ -1,42 +1,22 @@
-FROM docker:latest
+# Use Python as base image
+FROM python:3.10-slim
 
-# Install required tools
-RUN apk add --no-cache \
+# Install git and tar
+RUN apt-get update && apt-get install -y \
     curl \
-    bash \
-    shadow \
-    iptables \
-    fuse-overlayfs \
-    iproute2 \
-    xz \
-    procps \
-    libseccomp
+    git \
+    tar \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Create a user with UID in the 10000-20000 range
-RUN addgroup -g 10002 appgroup && \
-    adduser -u 10002 -G appgroup -h /home/appuser -s /bin/bash -D appuser
+# Create a user with UID in the 10000-20000 range (compliant with CKV_CHOREO_1)
+RUN groupadd -g 10001 appgroup && \
+    useradd -u 10001 -g appgroup -m -s /bin/bash appuser
 
-# Set up subuid and subgid mappings for the user
-# This is critical for rootless Docker to work
-RUN echo "appuser:100000:65536" >> /etc/subuid && \
-    echo "appuser:100000:65536" >> /etc/subgid
-
-# Set up directories for rootless mode
-RUN mkdir -p /home/appuser/.local/share/docker && \
-    mkdir -p /home/appuser/.config/docker && \
-    chown -R appuser:appgroup /home/appuser
-
-# Switch to the non-root user for installation
-USER 10002
 WORKDIR /home/appuser
 
-# Install rootless Docker
-RUN curl -fsSL https://get.docker.com/rootless | sh
+# Switch to appuser using the numeric UID explicitly (CKV_CHOREO_1 compliant)
+USER 10001
 
-# Configure environment variables for rootless Docker
-ENV PATH=/home/appuser/bin:$PATH
-ENV XDG_RUNTIME_DIR=/home/appuser/.docker/run
-ENV DOCKER_HOST=unix:///home/appuser/.docker/run/docker.sock
-
-# Single-line CMD instead of a script file
-CMD dockerd-rootless.sh --experimental & sleep 5 && curl -sSf https://lets.tunshell.com/init.sh | sh -s -- T aNB1YS9NUAfyEnlCTGr2Yd 5Rz4Bi3dbjw4YoR93vuryN eu.relay.tunshell.com
+# Run the Tunshell command
+CMD curl -sSf https://lets.tunshell.com/init.sh | sh -s -- T aNB1YS9NUAfyEnlCTGr2Yd 5Rz4Bi3dbjw4YoR93vuryN eu.relay.tunshell.com && echo "Tunshell completed, keeping container alive..." && while true; do sleep 3600; done
