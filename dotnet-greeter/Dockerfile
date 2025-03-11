@@ -15,6 +15,11 @@ RUN groupadd -g 10001 appgroup && \
 
 WORKDIR /home/appuser
 
+# Create the .udocker directory and ensure proper permissions
+RUN mkdir -p /home/appuser/.udocker && \
+    chown -R 10001:10001 /home/appuser/.udocker && \
+    chmod -R 755 /home/appuser/.udocker
+
 # Switch to appuser using the numeric UID explicitly (CKV_CHOREO_1 compliant)
 USER 10001
 
